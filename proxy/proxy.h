@@ -11,7 +11,12 @@
 #include <stdbool.h>
 
 
-void DieWithError(char *errorMessage);  /* Error handling function */
+void DieWithError(char *errorMessage)
+{
+    fprintf(stderr, "%s\n", errorMessage);
+    fprintf(stderr, "Exiting...\n");
+    exit(1);
+}
 
 
 #define ECHOMAX 300

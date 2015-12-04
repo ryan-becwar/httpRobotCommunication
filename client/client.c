@@ -83,18 +83,23 @@ int main(int argc, char *argv[])
     }
 
   /* SEND INITIAL EMPTY PACKET */
+  printf("Sending first packet");
   if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
     {
       DieWithError("sendto() sent a different number of bytes than expected");
     }
 
   /* GET SERVER PASSWORD */
+  fromSize = sizeof(fromAddr);
+  printf("Receiving password packet");
   if ((bytes_received = recvfrom(sock, header, sizeof(header), 0, (struct sockaddr *) &fromAddr, &fromSize)) != sizeof(header))
     {
       DieWithError("recvfrom() failed");
     }
+  printf("%s", header);
 
   /* SEND ACK BACK TO SERVER */
+  printf("Sending ack");
   if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
     {
       DieWithError("sendto() sent a different number of bytes than expected");
@@ -104,16 +109,18 @@ int main(int argc, char *argv[])
   int y;
   for(y=0; y<n; y++)
     {
+      /*
       expSize = 0;
       bytes_received = 0;
       bytes_written = 0;
-      filename = "image";
-      sprintf(filenum, "%d", filecount);
-      strcat(filename, filenum);
-      FILE *f = fopen(filename, "w");
+      //filename = "image";
+      //snprintf(filenum, 1, "%d", filecount);
+      //strcat(filename, filenum);
+      FILE *f = fopen("img.jpg", "w");
       filecount++;
-
-      header[11] = 2; //Image
+      */
+      /*
+      header[8] = 2; //Image
 
       if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
 	{
@@ -139,16 +146,17 @@ int main(int argc, char *argv[])
 	  bytes_written += fprintf(f, "%s", payload);
 	  bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize);
 	}
+      */
 
-      header[11] = 32; //Move
+      header[8] = 32; //Move
 
       if(l > 5)
 	{
-	  header[15] = 5;
+	  header[12] = 5;
 	}
       else
 	{
-	  header[15] = l;
+	  header[12] = l;
 	}
 
       if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
@@ -160,15 +168,15 @@ int main(int argc, char *argv[])
       waittime = waittime * 1000000; //Convert to microseconds
       usleep(waittime);
 
-      header[11] = 128; //Stop
+      header[8] = 128; //Stop
 
       if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
 	{
 	  DieWithError("sendto() sent a different number of bytes than expected");
 	}
 
-      header[11] = 64; //Turn
-      header[15] = 1;
+      header[8] = 64; //Turn
+      header[12] = 1;
 
       if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
 	{
@@ -179,7 +187,7 @@ int main(int argc, char *argv[])
       waittime = waittime * 1000000; //Convert to microseconds
       usleep(waittime); 
 
-      header[11] = 128; //Stop
+      header[8] = 128; //Stop
 
       if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
 	{
@@ -187,13 +195,14 @@ int main(int argc, char *argv[])
 	}
     }
 
+  /*
   expSize = 0;
   bytes_received = 0;
   bytes_written = 0;
-  filename = "image";
-  sprintf(filenum, "%d", filecount);
-  strcat(filename, filenum);
-  FILE *f = fopen(filename, "w");
+  //filename = "image";
+  //sprintf(filenum, "%d", filecount);
+  //strcat(filename, filenum);
+  FILE *f = fopen("finalimg.jpg", "w");
 
   header[11] = 2; //Final image
 
@@ -221,9 +230,12 @@ int main(int argc, char *argv[])
       bytes_written += fprintf(f, "%s", payload);
       bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize);
     }
-  
-  close(sock);
+  */
 
+  //SEND QUIT
+
+  close(sock);
+  printf("All requests sent, socket closed, client finished");
   exit(0);
 }
 
