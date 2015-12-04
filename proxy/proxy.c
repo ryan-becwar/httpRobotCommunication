@@ -1,4 +1,5 @@
 #include "proxy.h"
+#include "protocol.h"
 
 int main(int argc, char *argv[]){
 
