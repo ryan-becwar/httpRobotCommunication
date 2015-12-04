@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     }
 
   /* SEND INITIAL EMPTY PACKET */
-  printf("Sending first packet");
+  printf("Sending first packet\n");
   if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
     {
       DieWithError("sendto() sent a different number of bytes than expected");
@@ -91,15 +91,16 @@ int main(int argc, char *argv[])
 
   /* GET SERVER PASSWORD */
   fromSize = sizeof(fromAddr);
-  printf("Receiving password packet");
+  printf("Receiving password packet\n");
   if ((bytes_received = recvfrom(sock, header, sizeof(header), 0, (struct sockaddr *) &fromAddr, &fromSize)) != sizeof(header))
     {
       DieWithError("recvfrom() failed");
     }
+
   printf("%s", header);
 
   /* SEND ACK BACK TO SERVER */
-  printf("Sending ack");
+  printf("Sending ack\n");
   if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
     {
       DieWithError("sendto() sent a different number of bytes than expected");
@@ -149,15 +150,7 @@ int main(int argc, char *argv[])
       */
 
       header[8] = 32; //Move
-
-      if(l > 5)
-	{
-	  header[12] = 5;
-	}
-      else
-	{
-	  header[12] = l;
-	}
+      header[12] = 5;
 
       if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
 	{

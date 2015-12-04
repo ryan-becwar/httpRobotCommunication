@@ -6,9 +6,7 @@
 //
 //
 
-#include "temp.h"
-#define RCVBUFSIZE 1024   /* Size of receive buffer */
-
+#include "proxy.h"
 
 void communicate(int requestType, char* host, int robot_number, char* robot_id, int data){
     int sock;                        /* Socket descriptor */
@@ -16,14 +14,15 @@ void communicate(int requestType, char* host, int robot_number, char* robot_id, 
     int port = -1;     /* Echo server port */
     char filename[30];             /* The save name for output */
     char fileRequest[100];
-    char removeHeader[RCVBUFSIZE];
+    char removeHeader[1024];
     char* doc = NULL;
     char echoString[300];                /* String to send to echo server */
-    char echoBuffer[RCVBUFSIZE];     /* Buffer for echo string */
+    char echoBuffer[1024];     /* Buffer for echo string */
     int bytesRec;   /* Bytes read in single recv()
                      and total bytes read */
     char request[60];
     
+    requestType = 8;
     switch(requestType) {
         //Image request
         case 2:
@@ -98,8 +97,8 @@ void communicate(int requestType, char* host, int robot_number, char* robot_id, 
     
     //  This establishes a connection.
     if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
-        DieWithError("connect() failed");
-    
+        DieWithError("connect() to robot failed");
+
     sprintf(echoString, "GET %s HTTP/1.1\r\nHOST: %s\r\n\r\n", request, host);
     //sprintf(echoString, "/state?id=robot_44procal");
     /*  This sends the request to the server */
@@ -113,7 +112,7 @@ void communicate(int requestType, char* host, int robot_number, char* robot_id, 
     
     unsigned int totalBytes=0;
     char payloadSize[30];
-    bytesRec = recv(sock, echoBuffer, RCVBUFSIZE, 0);
+    bytesRec = recv(sock, echoBuffer, 1024, 0);
     //    memset(removeHeader, 0, sizeof(removeHeader));
     sprintf(removeHeader, "%s", strtok(echoBuffer, "\n"));
     sprintf(removeHeader, "%s", strtok(NULL, " "));
@@ -128,13 +127,13 @@ void communicate(int requestType, char* host, int robot_number, char* robot_id, 
     
     totalBytes+=sizeof(removeHeader);
     fprintf(fp,"%s", removeHeader);
-    printf("%s", removeHeader);/////
+    printf("%s", removeHeader);
     memset(removeHeader, 0, sizeof(removeHeader));
     memset(echoBuffer, 0, bytesRec);
     
     if(bytesRec<0) DieWithError("recv() failed or connection closed prematurely");
     
-    while ((bytesRec = recv(sock, echoBuffer, RCVBUFSIZE, 0)) > 0){
+    while ((bytesRec = recv(sock, echoBuffer, 1024, 0)) > 0){
         totalBytes+=bytesRec;
         fprintf(fp,"%s", echoBuffer);
         //        printf("%s", echoBuffer);

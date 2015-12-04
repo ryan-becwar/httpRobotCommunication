@@ -18,7 +18,7 @@ char* dataToHeader(headerData data, char* header) {
   writeLoc = (uint32_t*)(&writeLoc[PAYLOAD_SIZE_LOC]);
   *writeLoc = data.payloadSize;
 
-  printf("%s", header + '\0');
+  //printf("%s", header + '\0');
   return header;
 }
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]){
   char filename[30];                  /* The save name for output */
   char fileRequest[100];
   char* doc = NULL;
-  char* host = "localhost";
+  char* host = "169.55.155.236";
   char echoString[300];               /* String to send to echo server */
   char echoBuffer[RCVBUFSIZE];        /* Buffer for echo string */
   int bytesRec;                       /* Bytes read in single recv() and total bytes read */
@@ -96,10 +96,10 @@ int main(int argc, char *argv[]){
     DieWithError("socket() failed");
 
   /* Construct local address structure */
-  memset(&udpServAddr, 0, sizeof(udpServAddr));   /* Zero out structure */
+  memset(&udpServAddr, 0, sizeof(udpServAddr));    /* Zero out structure */
   udpServAddr.sin_family = AF_INET;                /* Internet address family */
   udpServAddr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
-  udpServAddr.sin_port = htons(udpServPort);      /* Local port */
+  udpServAddr.sin_port = htons(udpServPort);       /* Local port */
 
   /* Bind to the local address */
   printf("UDPEchoServer: About to bind to port %d\n", udpServPort);    
@@ -142,13 +142,15 @@ int main(int argc, char *argv[]){
 	    DieWithError("Recieving packet failed");
 	  }
 
-	printf("Request: %s", packetBuffer);
-
 	//Read the header from the buffer
 	bufToData(header, packetBuffer);
 	if(header[PASSWORD_LOC] != password)
 	  DieWithError("Invalid password");
 
+	if(header[CLIENT_REQUEST_LOC] == 32)
+	  {
+	    communicate(header[CLIENT_REQUEST_LOC], host, robotNumber, robotId, header[REQUEST_DATA_LOC]);
+	  }
       }
 		
     }

@@ -10,17 +10,7 @@
 #include <netdb.h>      /* for getHostByName() */
 #include <stdbool.h>
 
-
-void DieWithError(char *errorMessage)
-{
-    fprintf(stderr, "%s\n", errorMessage);
-    fprintf(stderr, "Exiting...\n");
-    exit(1);
-}
-
+void DieWithError(char *errorMessage);
 
 #define ECHOMAX 300
 #define RCVBUFSIZE 32   /* Size of receive buffer */
-
-
-
