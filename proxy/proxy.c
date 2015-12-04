@@ -22,6 +22,14 @@ char* dataToHeader(headerData data, char* header) {
 	return header;
 }
 
+void bufToData(uint32_t *header, char* buf){
+	int i;
+	for(i=0; i<7; i++){
+		header[i] = *(uint32_t *)&buf[i*4];
+		printf("header: %d\n", header[i]);
+	}
+}
+
 int main(int argc, char *argv[]){
 
 	/*
@@ -34,10 +42,10 @@ int main(int argc, char *argv[]){
 	char udpBuffer[ECHOMAX];        /* Buffer for echo string */
 	unsigned short udpServPort = 8080;     /* Server port */
 	int recvMsgSize;                 /* Size of received message */
-	int password = 0;
+	int password = 5;
 	char packetBuffer[300];
 	headerData hData;	
-	char header[28];
+	uint32_t header[7];
 
 
 	/*
@@ -94,11 +102,6 @@ int main(int argc, char *argv[]){
 	udpServAddr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
 	udpServAddr.sin_port = htons(udpServPort);      /* Local port */
 
-	hData.protocolID = 1;
-	hData.password = 20;
-	hData.clientRequest = 12312;
-	dataToHeader(hData, header);
-
 	/* Bind to the local address */
 	printf("UDPEchoServer: About to bind to port %d\n", udpServPort);    
 	if (bind(udpSock, (struct sockaddr *) &udpServAddr, sizeof(udpServAddr)) < 0)
@@ -110,22 +113,25 @@ int main(int argc, char *argv[]){
 		udpCliAddrLen = sizeof(udpClntAddr);
 
 		/* Block until receive message from a client */
-		if ((recvMsgSize = recvfrom(udpSock, udpBuffer, ECHOMAX, 0,
+		if ((recvMsgSize = recvfrom(udpSock, packetBuffer, ECHOMAX, 0,
 			(struct sockaddr *) &udpClntAddr, &udpCliAddrLen)) < 0)
 			DieWithError("recvfrom() failed");
 
 		printf("Handling client %s\n", inet_ntoa(udpClntAddr.sin_addr));
 
-		/* Send received datagram back to the client */
-//		if (sendto(udpSock, udpBuffer, recvMsgSize, 0, 
-//			(struct sockaddr *) &udpClntAddr, sizeof(udpClntAddr)) != recvMsgSize)
-//			DieWithError("sendto() sent a different number of bytes than expected");
-
 		/* Handle session with the new client*/
 		//Send password to client
-		if(sendto(udpSock, &password, sizeof(password), 0,
-			(struct sockaddr *) &udpClntAddr, sizeof(udpClntAddr)) != 4)
+		bufToData(header, packetBuffer);
+		if(header[IDENTIFIER_LOC] != 0)
+			DieWithError("Bad protocol");
+		//Set password
+		header[PASSWORD_LOC] = password;
+		
+		if(sendto(udpSock, header, 28, 0,
+			(struct sockaddr *) &udpClntAddr, sizeof(udpClntAddr)) != 28)
 			DieWithError("Sent wrong number of password bytes");
+
+		printf("Sent first response with password\n");
 		
 		bool exit = false;
 		while(!exit){
@@ -134,8 +140,14 @@ int main(int argc, char *argv[]){
 				DieWithError("Recieving packet failed");
 
 			printf("Request: %s", packetBuffer);
+
+			//Read the header from the buffer
+			bufToData(header, packetBuffer);
+			if(header[PASSWORD_LOC] != password)
+				DieWithError("Invalid password");
+
 		}
-			
+		
 	}
 	/* NOT REACHED */	
 	

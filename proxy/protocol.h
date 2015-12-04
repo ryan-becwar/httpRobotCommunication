@@ -9,13 +9,13 @@ typedef struct headerData {
 } headerData;
 
 #define IDENTIFIER_LOC 0 
-#define PASSWORD_LOC 4
-#define CLIENT_REQUEST_LOC 8 
-#define REQUEST_DATA_LOC 12
-#define BYTE_OFFSET_LOC 16
-#define TOTAL_SIZE_LOC 20
-#define PAYLOAD_SIZE_LOC 24
-#define PAYLOAD_LOC 28
+#define PASSWORD_LOC 1
+#define CLIENT_REQUEST_LOC 2 
+#define REQUEST_DATA_LOC 3
+#define BYTE_OFFSET_LOC 4
+#define TOTAL_SIZE_LOC 5
+#define PAYLOAD_SIZE_LOC 6
+#define PAYLOAD_LOC 7
 
 #define CONNECT	0
 #define IMAGE	2
