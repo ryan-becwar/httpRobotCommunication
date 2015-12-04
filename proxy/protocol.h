@@ -1,11 +1,11 @@
 typedef struct headerData {
-	int protocolID;
-	int password;
-	int clientRequest;
-	int requestData;
-	int byteOffset;
-	int totalSize;
-	int payloadSize;
+	uint32_t protocolID;
+	uint32_t password;
+	uint32_t clientRequest;
+	uint32_t requestData;
+	uint32_t byteOffset;
+	uint32_t totalSize;
+	uint32_t payloadSize;
 } headerData;
 
 #define IDENTIFIER_LOC 0 

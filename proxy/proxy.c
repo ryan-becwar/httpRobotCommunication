@@ -1,6 +1,27 @@
 #include "proxy.h"
 #include "protocol.h"
 
+char* dataToHeader(headerData data, char* header) {
+	uint32_t *writeLoc;
+	writeLoc = (uint32_t*)(&writeLoc[IDENTIFIER_LOC]);
+	*writeLoc = data.protocolID;
+	writeLoc = (uint32_t*)(&writeLoc[PASSWORD_LOC]);
+	*writeLoc = data.password;
+	writeLoc = (uint32_t*)(&writeLoc[CLIENT_REQUEST_LOC]);
+	*writeLoc = data.clientRequest;
+	writeLoc = (uint32_t*)(&writeLoc[REQUEST_DATA_LOC]);
+	*writeLoc = data.requestData;
+	writeLoc = (uint32_t*)(&writeLoc[BYTE_OFFSET_LOC]);
+	*writeLoc = data.byteOffset;
+	writeLoc = (uint32_t*)(&writeLoc[TOTAL_SIZE_LOC]);
+	*writeLoc = data.totalSize;
+	writeLoc = (uint32_t*)(&writeLoc[PAYLOAD_SIZE_LOC]);
+	*writeLoc = data.payloadSize;
+
+	printf("%s", header + '\0');
+	return header;
+}
+
 int main(int argc, char *argv[]){
 
 	/*
@@ -15,7 +36,8 @@ int main(int argc, char *argv[]){
 	int recvMsgSize;                 /* Size of received message */
 	int password = 0;
 	char packetBuffer[300];
-
+	headerData hData;	
+	char header[28];
 
 
 	/*
@@ -71,6 +93,11 @@ int main(int argc, char *argv[]){
 	udpServAddr.sin_family = AF_INET;                /* Internet address family */
 	udpServAddr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
 	udpServAddr.sin_port = htons(udpServPort);      /* Local port */
+
+	hData.protocolID = 1;
+	hData.password = 20;
+	hData.clientRequest = 12312;
+	dataToHeader(hData, header);
 
 	/* Bind to the local address */
 	printf("UDPEchoServer: About to bind to port %d\n", udpServPort);    
