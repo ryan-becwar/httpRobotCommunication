@@ -18,26 +18,25 @@ void clientCNTCCode();
 int main(int argc, char *argv[])
 {
   //Change variable names before submission
-  int sock;                        /* Socket descriptor */
-  struct sockaddr_in echoServAddr; /* Echo server address */
-  struct sockaddr_in fromAddr;     /* Source address of echo */
-  struct hostent *thehost;         /* Hostent from gethostbyname() */
-  unsigned short echoServPort;     /* Echo server port */
-  unsigned int fromSize;           /* In-out of address size for recvfrom() */
-  char *servIP;                    /* IP address of server */
-  char *echoString;                /* String to send to echo server */
-  char respBuffer[BUFSIZE];        /* Buffer for receiving echoed string */
-  int n = 4;                       /* Number of sides */
-  double l = 1.0;                  /* Length of sides */
-  char header[28] = {0};           /* 28 byte header for custom protocol */
-  double waittime;                 /* Time to wait while an action is performed */
-  int expSize;                     /* Expected size of incoming payload */
-  int bytes_received;              /* Bytes received from server */
-  int bytes_written;               /* Total bytes written to file */
-  char *filename = "image";        /* Name of file to write to */
-  char *filenum;
-  int filecount = 1;               /* File counter */
-  char payload[BUFSIZE - 28];      /* Size of payload */
+  int sock;                           /* Socket descriptor */
+  struct sockaddr_in echoServAddr;    /* Echo server address */
+  struct sockaddr_in fromAddr;        /* Source address of echo */
+  struct hostent *thehost;            /* Hostent from gethostbyname() */
+  unsigned short echoServPort;        /* Echo server port */
+  unsigned int fromSize;              /* In-out of address size for recvfrom() */
+  char *servIP;                       /* IP address of server */
+  char respBuffer[BUFSIZE];           /* Buffer for receiving echoed string */
+  int n = 4;                          /* Number of sides */
+  double l = 1.0;                     /* Length of sides */
+  char header[28] = {0};              /* 28 byte header for custom protocol */
+  double waittime;                    /* Time to wait while an action is performed */
+  int expSize;                        /* Expected size of incoming payload */
+  int bytes_received;                 /* Bytes received from server */
+  int bytes_written;                  /* Total bytes written to file */
+  char *filename = "image";           /* Name of file to write to */
+  char *filenum = "";                 /* String that holds the file number to be apended */
+  int filecount = 1;                  /* File counter */
+  char payload[BUFSIZE - 28];         /* Size of payload */
 
   int i;
   for(i=1; i<argc; i++)
@@ -108,7 +107,10 @@ int main(int argc, char *argv[])
       expSize = 0;
       bytes_received = 0;
       bytes_written = 0;
-      FILE *f = fopen(strcat(filename, itoa(filecount, filenum, 10)), "w");
+      filename = "image";
+      sprintf(filenum, "%d", filecount);
+      strcat(filename, filenum);
+      FILE *f = fopen(filename, "w");
       filecount++;
 
       header[11] = 2; //Image
@@ -118,7 +120,7 @@ int main(int argc, char *argv[])
 	  DieWithError("sendto() sent a different number of bytes than expected");
 	}
 
-      if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) <= 0)
+      if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) < 0)
 	{
 	  DieWithError("recvfrom() failed");
 	}
@@ -188,7 +190,10 @@ int main(int argc, char *argv[])
   expSize = 0;
   bytes_received = 0;
   bytes_written = 0;
-  FILE *f = fopen(strcat(filename, itoa(filecount, filenum, 10), "w");
+  filename = "image";
+  sprintf(filenum, "%d", filecount);
+  strcat(filename, filenum);
+  FILE *f = fopen(filename, "w");
 
   header[11] = 2; //Final image
 
