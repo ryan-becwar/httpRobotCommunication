@@ -10,7 +10,7 @@ int main(int argc, char *argv[]){
     char fileRequest[100];
     char* doc = NULL;
     char* host = NULL;
-    char echoString[300];                /* String to send to echo server */
+    char  request[300];                /* String to send to echo server */
     char echoBuffer[RCVBUFSIZE];     /* Buffer for echo string */
     int bytesRec;   /* Bytes read in single recv()
                      and total bytes read */
@@ -87,11 +87,11 @@ int main(int argc, char *argv[]){
     if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
         DieWithError("connect() failed");
     
-char* requestedMsg =  "/state?id=44procal";
-    sprintf(echoString, "GET %s HTTP/1.1\r\nHOST: %s\r\n\r\n", requestedMsg, host);
-	//sprintf(echoString, "/state?id=robot_44procal");
+//char* requestedMsg =  "/state?id=44procal";
+    sprintf( request, "GET %s HTTP/1.1\r\nHOST: %s\r\n\r\n", fileRequest, host);
+	//sprintf( request, "/state?id=robot_44procal");
     /*  This sends the request to the server */
-    if (send(sock, echoString, strlen(echoString), 0) < 0){
+    if (send(sock,  request, strlen( request), 0) < 0){
         DieWithError("send() failed");
     }
     
@@ -107,4 +107,33 @@ char* requestedMsg =  "/state?id=44procal";
     close(sock);
     exit(0);
     
+}
+
+void commandImage(int robot_number, char* request){
+    sprintf(request, "/snapshot?topic=/robot_%d/image?width=600?height=500", host, robot_number);
+    
+}
+
+void commandGPS(int robot_id, char* request){
+    sprintf(request, "/state?id=%d", robot_id);
+}
+
+void commandDGPS(int robot_id, char* request){
+    sprintf(request, "/state?id=%d", host, robot_id);
+}
+
+void commandLasers(int robot_id, char* request){
+    sprintf(request, "/state?id=%d", host, robot_id);
+}
+
+void commandMove(int robot_id, int data, char* request){
+    sprintf(request, "/state?id=%d&lx=%d", host, robot_id, data);
+}
+
+void commandTurn(int robot_id, int data, char* request){
+    sprintf(request, "/state?id=%d&lz=%d", host, robot_id, data);
+}
+
+void commandStop(int robot_id, char* request){
+    sprintf(request, "/state?id=%d&lx=0", host, robot_id);
 }

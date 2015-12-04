@@ -7,5 +7,5 @@
 #include <unistd.h>     /* for close() */
 
 void DieWithError(char* errorMessage);  /* Error handling function */
-char* findHost(char* url);
-char* fileToGet(char*url);
+
+void communicate(int requestType, char* host, int robot_number, char* robot_id, int data);
