@@ -18,7 +18,6 @@ char* dataToHeader(headerData data, char* header) {
   writeLoc = (uint32_t*)(&writeLoc[PAYLOAD_SIZE_LOC]);
   *writeLoc = data.payloadSize;
 
-  //printf("%s", header + '\0');
   return header;
 }
 
@@ -47,7 +46,6 @@ int main(int argc, char *argv[]){
   headerData hData;	
   uint32_t header[7];
 
-
   /*
     ===========TCP CLIENT VARS =============
   */
@@ -57,7 +55,7 @@ int main(int argc, char *argv[]){
   char filename[30];                  /* The save name for output */
   char fileRequest[100];
   char* doc = NULL;
-  char* host = "169.55.155.236";
+  char* host = "localhost";
   char echoString[300];               /* String to send to echo server */
   char echoBuffer[RCVBUFSIZE];        /* Buffer for echo string */
   int bytesRec;                       /* Bytes read in single recv() and total bytes read */
@@ -122,8 +120,12 @@ int main(int argc, char *argv[]){
       /* Handle session with the new client*/
       //Send password to client
       bufToData(header, packetBuffer);
+
       if(header[IDENTIFIER_LOC] != 0)
-	DieWithError("Bad protocol");
+	{
+	  DieWithError("Invalid protocol");
+	}
+
       //Set password
       printf("Password: %d\n", password);
       header[PASSWORD_LOC] = password;
@@ -136,22 +138,36 @@ int main(int argc, char *argv[]){
       printf("Sent first response with password\n");
 		
       bool exit = false;
-      while(!exit){
-	if((recvMsgSize = recvfrom(udpSock, packetBuffer, 300, 0, (struct sockaddr *) &udpClntAddr, &udpCliAddrLen)) < 0)
-	  {
-	    DieWithError("Recieving packet failed");
-	  }
+      while(!exit)
+	{
+	  if((recvMsgSize = recvfrom(udpSock, packetBuffer, 300, 0, (struct sockaddr *) &udpClntAddr, &udpCliAddrLen)) < 0)
+	    {
+	      DieWithError("Recieving packet failed");
+	    }
 
-	//Read the header from the buffer
-	bufToData(header, packetBuffer);
-	if(header[PASSWORD_LOC] != password)
-	  DieWithError("Invalid password");
+	  //Read the header from the buffer
+	  bufToData(header, packetBuffer);
+	  if(header[IDENTIFIER_LOC] != 0)
+	    {
+	      DieWithError("Invalid protocol");
+	    }
 
-	if(header[CLIENT_REQUEST_LOC] == 32)
-	  {
-	    communicate(header[CLIENT_REQUEST_LOC], host, robotNumber, robotId, header[REQUEST_DATA_LOC]);
-	  }
-      }
+	  if(header[PASSWORD_LOC] != password)
+	    {
+	      DieWithError("Invalid password");
+	    }
+
+	  if(header[CLIENT_REQUEST_LOC] == 255)
+	    {
+	      exit = true;
+	      password++;
+	    }
+	  else
+	    {
+	      //communicate(header[CLIENT_REQUEST_LOC], host, robotNumber, robotId, header[REQUEST_DATA_LOC]);
+	      printf("Handling request %d\n", header[CLIENT_REQUEST_LOC]);
+	    }
+	}
 		
     }
   /* NOT REACHED */	

@@ -9,7 +9,7 @@ cause the robot to move in the shape of a polygon with a
 user specified number of sides with a user defined size length.
 
 *********************************************************/
-#include "robot.h"
+#include "client.h"
 
 #define BUFSIZE 300
 
@@ -106,21 +106,23 @@ int main(int argc, char *argv[])
       DieWithError("sendto() sent a different number of bytes than expected");
     }
 
-  /* CREATE AND SEND INSTRUCTION HEADERS */
+  /* CREATE AND SEND INSTRUCTION HEADERS FIRST SHAPE*/
   int y;
   for(y=0; y<n; y++)
     {
-      /*
       expSize = 0;
       bytes_received = 0;
       bytes_written = 0;
-      //filename = "image";
-      //snprintf(filenum, 1, "%d", filecount);
-      //strcat(filename, filenum);
-      FILE *f = fopen("img.jpg", "w");
-      filecount++;
-      */
-      /*
+      filecount = 0;
+      filename = "image1.jpg";
+      while(access(filename, F_OK) != -1)
+	{
+	  sprintf(filename, "image%d.jpg", filecount);
+	  filecount++;
+	}
+
+      FILE *f = fopen(filename, "w");
+      
       header[8] = 2; //Image
 
       if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
@@ -147,15 +149,20 @@ int main(int argc, char *argv[])
 	  bytes_written += fprintf(f, "%s", payload);
 	  bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize);
 	}
-      */
+      fclose(f);
 
       header[8] = 32; //Move
       header[12] = 5;
 
-      if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
+      if(sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
 	{
 	  DieWithError("sendto() sent a different number of bytes than expected");
 	}
+
+      while(recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) != 28)
+    {
+      sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr));
+    }
 
       waittime = (double)l/5.0; //Wait time during move
       waittime = waittime * 1000000; //Convert to microseconds
@@ -188,44 +195,13 @@ int main(int argc, char *argv[])
 	}
     }
 
-  /*
-  expSize = 0;
-  bytes_received = 0;
-  bytes_written = 0;
-  //filename = "image";
-  //sprintf(filenum, "%d", filecount);
-  //strcat(filename, filenum);
-  FILE *f = fopen("finalimg.jpg", "w");
+  //Quit
+  header[8] = 255;
 
-  header[11] = 2; //Final image
-
-  if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
+  if(sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
     {
-      DieWithError("sendto() sent a different number of bytes than expected");
+      DieWithError("sendto() failed");
     }
-
-  if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) <= 0)
-    {
-      DieWithError("recvfrom() failed");
-    }
-      
-  //Get expected size
-  int v;
-  for(v=23; v<27; v++)
-    {
-      expSize *= 512;
-      expSize += respBuffer[v];
-    }
-
-  while(bytes_written < expSize)
-    {
-      strncpy(payload, &respBuffer[28], (strlen(respBuffer)-28));
-      bytes_written += fprintf(f, "%s", payload);
-      bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize);
-    }
-  */
-
-  //SEND QUIT
 
   close(sock);
   printf("All requests sent, socket closed, client finished");
