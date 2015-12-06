@@ -1,7 +1,8 @@
 #include "proxy.h"
 #include "protocol.h"
 
-char* dataToHeader(headerData data, char* header) {
+char* dataToHeader(headerData data, char* header) 
+{
   uint32_t *writeLoc;
   writeLoc = (uint32_t*)(&writeLoc[IDENTIFIER_LOC]);
   *writeLoc = data.protocolID;
@@ -21,12 +22,14 @@ char* dataToHeader(headerData data, char* header) {
   return header;
 }
 
-void bufToData(uint32_t *header, char* buf){
+void bufToData(uint32_t *header, char* buf)
+{
   int i;
-  for(i=0; i<7; i++){
-    header[i] = *(uint32_t *)&buf[i*4];
-    printf("header: %d %d\n", header[i], i);
-  }
+  for(i=0; i<7; i++)
+    {
+      header[i] = *(uint32_t *)&buf[i*4];
+      printf("header: %d %d\n", header[i], i);
+    }
 }
 
 int main(int argc, char *argv[]){
@@ -38,13 +41,19 @@ int main(int argc, char *argv[]){
   struct sockaddr_in udpServAddr;     /* Local address */
   struct sockaddr_in udpClntAddr;     /* Client address */
   unsigned int udpCliAddrLen;         /* Length of incoming message */
-  char udpBuffer[ECHOMAX];            /* Buffer for echo string */
+  char udpBuffer[ECHOMAX];            /* Buffer for response data */
   unsigned short udpServPort = 8080;  /* Server port */
   int recvMsgSize;                    /* Size of received message */
   int password = rand() % 100;
   char packetBuffer[300];
   headerData hData;	
   uint32_t header[7];
+  int fd; 
+  char fd_path[255]; 
+  char * filename = malloc(255);
+  struct stat *fileinfo;
+  int filesize;
+  
 
   /*
     ===========TCP CLIENT VARS =============
@@ -59,13 +68,14 @@ int main(int argc, char *argv[]){
   char echoString[300];               /* String to send to echo server */
   char echoBuffer[RCVBUFSIZE];        /* Buffer for echo string */
   int bytesRec;                       /* Bytes read in single recv() and total bytes read */
-  char* robotId = "default";
-  int robotNumber = 0;                /* Used to get pictures */
+  char* robotId = "44procal";
+  int robotNumber = 1;                /* Used to get pictures */
 
 	
   //Reading args
   int i;
-  for(i=1; i < argc-1; i += 2){
+  for(i=1; i < argc-1; i += 2)
+{
     char *flag = argv[i];
     char *arg = argv[i+1];
     fprintf(stderr, "Flag: %s Arg: %s\n", flag, arg);
@@ -82,7 +92,7 @@ int main(int argc, char *argv[]){
   }
 
   //Test print out of arguments
-  fprintf(stderr, "host: %s  robotId: %s robotNumber: %i udpServPort: %i\n",
+  fprintf(stderr, "host: %s\nrobotId: %s\nrobotNumber: %i\nudpServPort: %i\n",
 	  host, robotId, robotNumber, udpServPort);
 
   /*
@@ -91,7 +101,9 @@ int main(int argc, char *argv[]){
 
   /* Create socket for sending/receiving datagrams */
   if ((udpSock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-    DieWithError("socket() failed");
+    {
+      DieWithError("socket() failed");
+    }
 
   /* Construct local address structure */
   memset(&udpServAddr, 0, sizeof(udpServAddr));    /* Zero out structure */
@@ -142,7 +154,7 @@ int main(int argc, char *argv[]){
 	{
 	  if((recvMsgSize = recvfrom(udpSock, packetBuffer, 300, 0, (struct sockaddr *) &udpClntAddr, &udpCliAddrLen)) < 0)
 	    {
-	      DieWithError("Recieving packet failed");
+	      DieWithError("Receiving packet failed");
 	    }
 
 	  //Read the header from the buffer
@@ -161,10 +173,36 @@ int main(int argc, char *argv[]){
 	    {
 	      exit = true;
 	      password++;
+	      printf("Quitting client. New password is %d\n", password);
 	    }
 	  else
 	    {
-	      //communicate(header[CLIENT_REQUEST_LOC], host, robotNumber, robotId, header[REQUEST_DATA_LOC]);
+	      FILE *f = fopen(communicate(header[CLIENT_REQUEST_LOC], host, robotNumber, robotId, header[REQUEST_DATA_LOC]), "r");
+	      fstat(f, fileinfo);
+	      filesize = fileinfo->st_size;
+	      fd = fileno(f); 
+	      sprintf(fd_path, "/proc/self/fd/%d", fd); 
+	      readlink(fd_path, filename, 255); 
+
+	      if(strcmp(filename, "fail") == 0)
+		{
+		  header[CLIENT_REQUEST_LOC] = 512;
+
+		  if(sendto(udpSock, header, 28, 0, (struct sockaddr *) &udpClntAddr, sizeof(udpClntAddr)) != 28)
+		    {
+		      DieWithError("Error message could not be sent");
+		    }
+		}
+	      else
+		{
+		  header[TOTAL_SIZE_LOC] = filesize;
+		  stncpy(packetBuffer, header, 28);
+		}
+	      //Chunk file contents
+	      //Send to client
+	      //With header
+
+
 	      printf("Handling request %d\n", header[CLIENT_REQUEST_LOC]);
 	    }
 	}

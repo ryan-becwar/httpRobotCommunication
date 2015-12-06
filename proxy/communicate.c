@@ -94,7 +94,7 @@ char* communicate(int requestType, char* host, int robot_number, char* robot_id,
     
     memset(requestMsg, 0, 300);
     FILE *fp = fopen(filename, "wb");
-    
+    memset(buffer, 0, 1024);
     bytesRec = recv(sock, buffer, 1024, 0);
     if(bytesRec<0) return "fail";
     memset(payload, 0, sizeof(payload));

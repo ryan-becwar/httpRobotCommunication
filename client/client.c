@@ -1,4 +1,4 @@
-/*********************************************************
+s /*********************************************************
 
 ROBOT CONTROL CLIENT
 
@@ -110,6 +110,7 @@ int main(int argc, char *argv[])
   int y;
   for(y=0; y<n; y++)
     {
+      /*
       expSize = 0;
       bytes_received = 0;
       bytes_written = 0;
@@ -120,7 +121,7 @@ int main(int argc, char *argv[])
 	  sprintf(filename, "image%d.jpg", filecount);
 	  filecount++;
 	}
-
+      */
       FILE *f = fopen(filename, "w");
       
       header[8] = 2; //Image
@@ -129,7 +130,8 @@ int main(int argc, char *argv[])
 	{
 	  DieWithError("sendto() sent a different number of bytes than expected");
 	}
-
+      
+      /*
       if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) < 0)
 	{
 	  DieWithError("recvfrom() failed");
@@ -150,6 +152,7 @@ int main(int argc, char *argv[])
 	  bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize);
 	}
       fclose(f);
+      */
 
       header[8] = 32; //Move
       header[12] = 5;
@@ -158,11 +161,6 @@ int main(int argc, char *argv[])
 	{
 	  DieWithError("sendto() sent a different number of bytes than expected");
 	}
-
-      while(recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) != 28)
-    {
-      sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr));
-    }
 
       waittime = (double)l/5.0; //Wait time during move
       waittime = waittime * 1000000; //Convert to microseconds
@@ -204,7 +202,7 @@ int main(int argc, char *argv[])
     }
 
   close(sock);
-  printf("All requests sent, socket closed, client finished");
+  printf("All requests sent, socket closed, client finished\n");
   exit(0);
 }
 
