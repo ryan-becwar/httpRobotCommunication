@@ -152,7 +152,8 @@ int main(int argc, char *argv[]){
       bool exit = false;
       while(!exit)
 	{
-	  if((recvMsgSize = recvfrom(udpSock, packetBuffer, 300, 0, (struct sockaddr *) &udpClntAddr, &udpCliAddrLen)) < 0)
+	  if((recvMsgSize = recvfrom(udpSock, packetBuffer, 300, 0,
+		(struct sockaddr *) &udpClntAddr, &udpCliAddrLen)) < 0)
 	    {
 	      DieWithError("Receiving packet failed");
 	    }
@@ -168,7 +169,7 @@ int main(int argc, char *argv[]){
 	    {
 	      DieWithError("Invalid password");
 	    }
-
+		//Quit Signal
 	  if(header[CLIENT_REQUEST_LOC] == 255)
 	    {
 	      exit = true;
@@ -177,7 +178,8 @@ int main(int argc, char *argv[]){
 	    }
 	  else
 	    {
-	      FILE *f = fopen(communicate(header[CLIENT_REQUEST_LOC], host, robotNumber, robotId, header[REQUEST_DATA_LOC]), "r");
+	      FILE *f = fopen(communicate(header[CLIENT_REQUEST_LOC], host,
+		robotNumber, robotId, header[REQUEST_DATA_LOC]), "r");
 	      fstat(f, fileinfo);
 	      filesize = fileinfo->st_size;
 	      fd = fileno(f); 
@@ -188,7 +190,8 @@ int main(int argc, char *argv[]){
 		{
 		  header[CLIENT_REQUEST_LOC] = 512;
 
-		  if(sendto(udpSock, header, 28, 0, (struct sockaddr *) &udpClntAddr, sizeof(udpClntAddr)) != 28)
+		  if(sendto(udpSock, header, 28, 0, (struct sockaddr *) &udpClntAddr,
+		  	sizeof(udpClntAddr)) != 28)
 		    {
 		      DieWithError("Error message could not be sent");
 		    }
