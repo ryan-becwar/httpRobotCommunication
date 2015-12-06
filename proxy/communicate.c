@@ -1,6 +1,6 @@
 #include "proxy.h"
 
-void communicate(int requestType, char* host, int robot_number, char* robot_id, int data){
+char* communicate(int requestType, char* host, int robot_number, char* robot_id, int data){
     int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     int port = -1;     /* Echo server port */
@@ -8,18 +8,21 @@ void communicate(int requestType, char* host, int robot_number, char* robot_id, 
     char fileRequest[100];
     char payload[1024];
     char* doc = NULL;
-    char echoString[300];                /* String to send to echo server */
-    char echoBuffer[1024];     /* Buffer for echo string */
+    char requestMsg[300];                /* String to send to echo server */
+    char buffer[1024];     /* Buffer for echo string */
     int bytesRec;   /* Bytes read in single recv()
                      and total bytes read */
     char request[60];
+    unsigned int totalBytes=0;
+    char payloadSize[30];
+    int i;
     
     switch(requestType) {
         //Image request
         case 2:
             port = 8081;
             sprintf(request, "/snapshot?topic=/robot_%d/image?width=600?height=500", robot_number);
-            sprintf(filename,"output.jpg");
+            sprintf(filename,"output2.jpg");
             break;
         //GPS request
         case 4:
@@ -66,7 +69,7 @@ void communicate(int requestType, char* host, int robot_number, char* robot_id, 
     
     /* Create a reliable, stream socket using TCP */
     if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-        DieWithError("socket() failed");
+        return "fail";
     
     /* Construct the server address structure */
     memset(&echoServAddr, 0, sizeof(echoServAddr));       /* Zero out structure */
@@ -74,107 +77,76 @@ void communicate(int requestType, char* host, int robot_number, char* robot_id, 
     echoServAddr.sin_port        = htons(port);   /* Server port */
     
     struct hostent        *he;
-    if ( (he = gethostbyname(host) ) == NULL ) {
-        exit(1); /* error */
-    }
-    memcpy(&echoServAddr.sin_addr, he->h_addr_list[0], he->h_length);
+    if ( (he = gethostbyname(host) ) == NULL )
+        return "fail"; 
     
+    memcpy(&echoServAddr.sin_addr, he->h_addr_list[0], he->h_length);
     
     //  This establishes a connection.
     if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
-        DieWithError("connect() to robot failed");
+        return "fail";
 
-    sprintf(echoString, "GET %s HTTP/1.1\r\nHOST: %s\r\n\r\n", request, host);
-    //sprintf(echoString, "/state?id=robot_44procal");
+    sprintf(requestMsg, "GET %s HTTP/1.1\r\nHOST: %s\r\n\r\n", request, host);
+    
     /*  This sends the request to the server */
+    if (send(sock, requestMsg, strlen(requestMsg), 0) < 0)
+        return "fail";
     
-    if (send(sock, echoString, strlen(echoString), 0) < 0){
-        DieWithError("send() failed");
-    }
-    memset(echoString, 0, 300);
-    printf("\nRECEIVED THIS FROM THE SERVER: \n");
-    FILE *fp = fopen(filename, "w");
+    memset(requestMsg, 0, 300);
+    FILE *fp = fopen(filename, "wb");
     
-    unsigned int totalBytes=0;
-    char payloadSize[30];
-    bytesRec = recv(sock, echoBuffer, 1024, 0);
-    //    memset(payload, 0, sizeof(payload));
+    bytesRec = recv(sock, buffer, 1024, 0);
+    if(bytesRec<0) return "fail";
+    memset(payload, 0, sizeof(payload));
+    
+    //process the image request differntly because it is an HTTP 1.0 response
     if(requestType==2){
-        printf("---%s\n", echoBuffer);
-        sprintf(payload, "%s", strtok(echoBuffer, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
+        //remove the header
+        sprintf(payload, "%s", strtok(buffer, "\n"));
+        for(i=0; i<7; i++)
+            sprintf(payload, "%s", strtok(NULL, "\n"));
 
-
-        printf("This: %s is payload\n", payload);
-        if(strlen(payload)>26){
-            fprintf(fp,"%s", payload);
-            totalBytes+=strlen(payload);
-        }
-        printf("%d bytes written", totalBytes);
-        //memset(payload, 0, sizeof(payload));
-        memset(echoBuffer, 0, bytesRec);
+        memset(payload, 0, sizeof(payload));
+        memset(buffer, 0, bytesRec);
         
-        if(bytesRec<0) DieWithError("recv() failed or connection closed prematurely");
-        
-        while ((bytesRec = recv(sock, echoBuffer, 1024, 0)) > 0){
+        while ((bytesRec = recv(sock, buffer, 1024, 0)) > 0){
             totalBytes+=bytesRec;
-            fprintf(fp,"%s", echoBuffer);
-            //        printf("%s", echoBuffer);
-            memset(echoBuffer, 0, bytesRec);
-            
-            if(bytesRec<0) DieWithError("recv() failed or connection closed prematurely");
+            fwrite(buffer, 1, bytesRec, fp);
+            memset(buffer, 0, bytesRec);
+            //if the robot goes down, alert the client
+            if(bytesRec<0) return "fail";
         }
-
-        printf("\n total bytes read %u", totalBytes);
-        fclose(fp);
-        printf("\n");
-        
-        close(sock);
-        
-    }else{
-//        printf("%s\n----", echoBuffer);
-        sprintf(payload, "%s", strtok(echoBuffer, "\n"));
+    }
+    //process the other responses by removing the header and then saving the payload
+    else{
+        //remove the header
+        sprintf(payload, "%s", strtok(buffer, "\n"));
         sprintf(payload, "%s", strtok(NULL, " "));
         sprintf(payloadSize, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\n"));
-        sprintf(payload, "%s", strtok(NULL, "\r\n"));
-    
-    printf("This number %s\n\n", payloadSize);
-    
+        for(i=0; i<5; i++)
+            sprintf(payload, "%s", strtok(NULL, "\n"));
+        
         if(strlen(payload)>26){
             fprintf(fp,"%s", payload);
             totalBytes+=strlen(payload);
         }
-    printf("%d bytes written", totalBytes);
-    //memset(payload, 0, sizeof(payload));
-    memset(echoBuffer, 0, bytesRec);
-    
-    if(bytesRec<0) DieWithError("recv() failed or connection closed prematurely");
-    
-    while (totalBytes != atoi(payloadSize) && (bytesRec = recv(sock, echoBuffer, 1024, 0)) > 0){
-        totalBytes+=bytesRec;
-        fprintf(fp,"%s", echoBuffer);
-        //        printf("%s", echoBuffer);
-        memset(echoBuffer, 0, bytesRec);
+        memset(payload, 0, sizeof(payload));
+        memset(buffer, 0, bytesRec);
         
-        if(bytesRec<0) DieWithError("recv() failed or connection closed prematurely");
+        while (totalBytes != atoi(payloadSize) && (bytesRec = recv(sock, buffer, 1024, 0)) > 0){
+            totalBytes+=bytesRec;
+            fprintf(fp,"%s", buffer);
+            memset(buffer, 0, bytesRec);
+            //if the robot goes down, alert the client
+            if(bytesRec<0) return "fail";
+        }
+
     }
-//    fseek(fp, 0L, SEEK_END);
-//    totalBytes = ftell(fp);
-//    fseek(fp, 0L, SEEK_SET);
-    printf("\n total bytes read %u", totalBytes);
-    fclose(fp);
-    printf("\n");
     
+    printf("\ntotal bytes read %u\n", totalBytes);
+    fclose(fp);
     close(sock);
-    }
+    
+    char * returnString = filename;
+    return returnString;
 }
