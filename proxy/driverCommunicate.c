@@ -4,7 +4,7 @@ char* communicate(int requestType, char* host, int robot_number, char* robot_id,
 
 int main(int argc, char *argv[]){
     char filename[15];
-    sprintf(filename, "%s", communicate(2, "169.55.155.236", 1, NULL, -1));
+//    sprintf(filename, "%s", communicate(2, "169.55.155.236", 1, NULL, -1));
 
     
     sprintf(filename, "%s", communicate(4, "169.55.155.236", -1, "44procal", -1));

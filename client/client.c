@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
   char *filenum = "";                 /* String that holds the file number to be apended */
   int filecount = 1;                  /* File counter */
   char payload[BUFSIZE - 28];         /* Size of payload */
+  char payloadSize[5];
 
   int i;
   for(i=1; i<argc; i++)
@@ -106,29 +107,15 @@ int main(int argc, char *argv[])
       DieWithError("sendto() sent a different number of bytes than expected");
     }
 
-      header[8] = 4; //Image
 
-      if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
-	{
-	  DieWithError("sendto() sent a different number of bytes than expected");
-	}
+  /* CREATE AND SEND INSTRUCTION HEADERS FIRST SHAPE*/
+  int y;
+  for(y=0; y<1; y++)
+    {
 	if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) < 0)
 	{
 	  DieWithError("recvfrom() failed");
 	}
-
-if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) < 0)
-	{
-	  DieWithError("recvfrom() failed");
-	}
-
-	printf("\n THIS WAS THE PAYLOAD RECEIVED %s", respBuffer+28);
-
-
-  /* CREATE AND SEND INSTRUCTION HEADERS FIRST SHAPE*/
- /* int y;
-  for(y=0; y<n; y++)
-    {
       /*
       expSize = 0;
       bytes_received = 0;
@@ -141,7 +128,7 @@ if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) 
 	  filecount++;
 	}
       */
-  /*    FILE *f = fopen(filename, "w");
+     /* FILE *f = fopen(filename, "w");
       
       header[8] = 2; //Image
 
@@ -173,7 +160,49 @@ if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) 
       fclose(f);
       */
 
-   /*   header[8] = 32; //Move
+	header[8] = 4; //GPS
+
+      if(sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
+	{
+	  DieWithError("sendto() sent a different number of bytes than expected");
+	}
+	if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) < 0)
+	{
+	  DieWithError("recvfrom() failed");
+	}
+	memcpy(payloadSize, &respBuffer[4], 4);
+	printf("payload size was %d\n", atoi(payloadSize));
+	printf("GPS: %s\n", respBuffer+28);
+
+	header[8] = 8; //DGPS
+	if(sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
+	{
+	  DieWithError("sendto() sent a different number of bytes than expected");
+	}
+	if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) < 0)
+	{
+	  DieWithError("recvfrom() failed");
+	}
+
+	printf("DGPS: %s\n", respBuffer+28);
+
+
+	header[8] = 16; //lasers
+	if(sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
+	{
+	  DieWithError("sendto() sent a different number of bytes than expected");
+	}
+	if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) < 0)
+	{
+	  DieWithError("recvfrom() failed");
+	}
+	printf("lasers: %s\n", respBuffer+28);
+/*while((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) > 0)
+	{
+	printf("lasers: %s\n", respBuffer+28);
+}
+/*
+      header[8] = 32; //Move
       header[12] = 5;
 
       if(sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
@@ -209,7 +238,7 @@ if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) 
       if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
 	{
 	  DieWithError("sendto() sent a different number of bytes than expected");
-	}
+	}*/
     }
 
   //Quit
@@ -219,7 +248,7 @@ if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) 
     {
       DieWithError("sendto() failed");
     }
-*/
+
   close(sock);
   printf("All requests sent, socket closed, client finished\n");
   exit(0);

@@ -16,7 +16,7 @@ char* communicate(int requestType, char* host, int robot_number, char* robot_id,
     unsigned int totalBytes=0;
     char payloadSize[30];
     int i;
-    
+
     switch(requestType) {
         //Image request
         case 2:
@@ -83,9 +83,9 @@ char* communicate(int requestType, char* host, int robot_number, char* robot_id,
     memcpy(&echoServAddr.sin_addr, he->h_addr_list[0], he->h_length);
     
     //  This establishes a connection.
-    if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
+    if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0){
         return "fail";
-
+}
     sprintf(requestMsg, "GET %s HTTP/1.1\r\nHOST: %s\r\n\r\n", request, host);
     
     /*  This sends the request to the server */
@@ -139,7 +139,7 @@ char* communicate(int requestType, char* host, int robot_number, char* robot_id,
 
         while (totalBytes != atoi(payloadSize) && (bytesRec = recv(sock, buffer, 1024, 0)) > 0){
             totalBytes+=bytesRec;
-            fprintf(fp,"%s", buffer);
+            fwrite(buffer, 1, bytesRec, fp);
             memset(buffer, 0, bytesRec);
             //if the robot goes down, alert the client
             if(bytesRec<0) return "fail";
@@ -147,7 +147,7 @@ char* communicate(int requestType, char* host, int robot_number, char* robot_id,
 
     }
     
-    printf("\ntotal bytes read %u\n", totalBytes);
+    //printf("\ntotal bytes read %u\n", totalBytes);
     fclose(fp);
     close(sock);
     

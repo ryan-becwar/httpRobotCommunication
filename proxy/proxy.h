@@ -11,6 +11,7 @@
 #include <stdbool.h>
 
 void DieWithError(char *errorMessage);
+char* communicate(int requestType, char* host, int robot_number, char* robot_id, int data);
 
 #define ECHOMAX 300
 #define RCVBUFSIZE 32   /* Size of receive buffer */

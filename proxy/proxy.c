@@ -28,8 +28,17 @@ void bufToData(uint32_t *header, char* buf)
   for(i=0; i<7; i++)
     {
       header[i] = *(uint32_t *)&buf[i*4];
-      printf("header: %d %d\n", header[i], i);
+      //printf("header: %d %d\n", header[i], i);
     }
+}
+
+void dataToBuf(uint32_t *header, char* buf)
+{
+	int i;
+	for(i=0; i<28; i++) {
+		buf[i] = *(char *)&header[i];
+		//printf("buf %d: %c\n", i, buf[i]);
+	}
 }
 
 int main(int argc, char *argv[]){
@@ -41,18 +50,17 @@ int main(int argc, char *argv[]){
   struct sockaddr_in udpServAddr;     /* Local address */
   struct sockaddr_in udpClntAddr;     /* Client address */
   unsigned int udpCliAddrLen;         /* Length of incoming message */
-  char udpBuffer[ECHOMAX];            /* Buffer for response data */
   unsigned short udpServPort = 8080;  /* Server port */
   int recvMsgSize;                    /* Size of received message */
   int password = rand() % 100;
   char packetBuffer[300];
   headerData hData;	
   uint32_t header[7];
-  int fd; 
-  char fd_path[255]; 
-  char * filename = malloc(255);
   struct stat *fileinfo;
   int filesize;
+	char characterHeader[28];
+  int bytesRead=0;
+  int totalBytesRead=0;
   
 
   /*
@@ -64,7 +72,7 @@ int main(int argc, char *argv[]){
   char filename[30];                  /* The save name for output */
   char fileRequest[100];
   char* doc = NULL;
-  char* host = "localhost";
+  char* host = "169.55.155.236";
   char echoString[300];               /* String to send to echo server */
   char echoBuffer[RCVBUFSIZE];        /* Buffer for echo string */
   int bytesRec;                       /* Bytes read in single recv() and total bytes read */
@@ -92,8 +100,8 @@ int main(int argc, char *argv[]){
   }
 
   //Test print out of arguments
-  fprintf(stderr, "host: %s\nrobotId: %s\nrobotNumber: %i\nudpServPort: %i\n",
-	  host, robotId, robotNumber, udpServPort);
+  //fprintf(stderr, "host: %s\nrobotId: %s\nrobotNumber: %i\nudpServPort: %i\n",
+//	  host, robotId, robotNumber, udpServPort);
 
   /*
     ===========UDP SERVER SETUP===============
@@ -112,7 +120,7 @@ int main(int argc, char *argv[]){
   udpServAddr.sin_port = htons(udpServPort);       /* Local port */
 
   /* Bind to the local address */
-  printf("UDPEchoServer: About to bind to port %d\n", udpServPort);    
+  printf("UDPProxyServer: About to bind to port %d\n", udpServPort);    
   if (bind(udpSock, (struct sockaddr *) &udpServAddr, sizeof(udpServAddr)) < 0)
     DieWithError("bind() failed");
 
@@ -149,6 +157,7 @@ int main(int argc, char *argv[]){
 
       printf("Sent first response with password\n");
 		
+	//While connected to currentClient
       bool exit = false;
       while(!exit)
 	{
@@ -178,13 +187,10 @@ int main(int argc, char *argv[]){
 	    }
 	  else
 	    {
-	      FILE *f = fopen(communicate(header[CLIENT_REQUEST_LOC], host,
-		robotNumber, robotId, header[REQUEST_DATA_LOC]), "r");
-	      fstat(f, fileinfo);
-	      filesize = fileinfo->st_size;
-	      fd = fileno(f); 
-	      sprintf(fd_path, "/proc/self/fd/%d", fd); 
-	      readlink(fd_path, filename, 255); 
+		sprintf(filename, "%s", communicate(header[CLIENT_REQUEST_LOC], host,
+		robotNumber, robotId, header[REQUEST_DATA_LOC]));
+	      FILE *f = fopen(filename, "rb");
+
 
 	      if(strcmp(filename, "fail") == 0)
 		{
@@ -198,15 +204,46 @@ int main(int argc, char *argv[]){
 		}
 	      else
 		{
+	      	  fseek(f, 0L, SEEK_END);
+		  filesize = ftell(f);
+		  fseek(f, 0L, SEEK_SET);
 		  header[TOTAL_SIZE_LOC] = filesize;
-		  stncpy(packetBuffer, header, 28);
+			//Convert header to a character array(not valid characters)
+
+			header[BYTE_OFFSET_LOC] = totalBytesRead;
+			dataToBuf(header, characterHeader);
+		  	strncpy(packetBuffer, characterHeader, 28);
+			fseek(f, totalBytesRead, SEEK_SET);
+			bytesRead = fread(packetBuffer+28, 1, 272, f);
+			//printf("Sending data. Total read = %d\n", totalBytesRead); 
+			if(sendto(udpSock, packetBuffer, 28+bytesRead, 0, (struct sockaddr *) &udpClntAddr, sizeof(udpClntAddr)) != bytesRead+28)
+		   	{
+		     		 DieWithError("Error message could not be sent");
+		    	}
+			totalBytesRead+=bytesRead;
+
+			while(totalBytesRead<filesize){
+				header[BYTE_OFFSET_LOC] = totalBytesRead;
+				dataToBuf(header, characterHeader);
+		  		strncpy(packetBuffer, characterHeader, 28);
+				fseek(f, totalBytesRead, SEEK_SET);
+				bytesRead = fread(packetBuffer+28, 1, 272, f);
+
+				//printf("Sending data. Total read = %d\n", totalBytesRead); 
+				//printf("sending %d bytes\n",  bytesRead);
+				if(sendto(udpSock, packetBuffer, 28+bytesRead, 0, (struct sockaddr *) &udpClntAddr, sizeof(udpClntAddr)) != bytesRead+28)
+		   		{
+		     		 	DieWithError("Error message could not be sent");
+		    		}
+				totalBytesRead+=bytesRead;
+				printf("%s",  packetBuffer+28);
+			}
+
+		printf("\n%d read but filesize is %d\n", totalBytesRead, filesize);
+
+		totalBytesRead=0;
+	      	  //printf("Handling request %d\n%s is packetBuffer\n", header[CLIENT_REQUEST_LOC], packetBuffer+28);
 		}
-	      //Chunk file contents
-	      //Send to client
-	      //With header
-
-
-	      printf("Handling request %d\n", header[CLIENT_REQUEST_LOC]);
 	    }
 	}
 		
