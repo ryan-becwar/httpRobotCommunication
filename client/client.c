@@ -1,4 +1,4 @@
-s /*********************************************************
+/*********************************************************
 
 ROBOT CONTROL CLIENT
 
@@ -106,8 +106,27 @@ int main(int argc, char *argv[])
       DieWithError("sendto() sent a different number of bytes than expected");
     }
 
+      header[8] = 4; //Image
+
+      if (sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
+	{
+	  DieWithError("sendto() sent a different number of bytes than expected");
+	}
+	if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) < 0)
+	{
+	  DieWithError("recvfrom() failed");
+	}
+
+if((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) < 0)
+	{
+	  DieWithError("recvfrom() failed");
+	}
+
+	printf("\n THIS WAS THE PAYLOAD RECEIVED %s", respBuffer+28);
+
+
   /* CREATE AND SEND INSTRUCTION HEADERS FIRST SHAPE*/
-  int y;
+ /* int y;
   for(y=0; y<n; y++)
     {
       /*
@@ -122,7 +141,7 @@ int main(int argc, char *argv[])
 	  filecount++;
 	}
       */
-      FILE *f = fopen(filename, "w");
+  /*    FILE *f = fopen(filename, "w");
       
       header[8] = 2; //Image
 
@@ -154,7 +173,7 @@ int main(int argc, char *argv[])
       fclose(f);
       */
 
-      header[8] = 32; //Move
+   /*   header[8] = 32; //Move
       header[12] = 5;
 
       if(sendto(sock, header, sizeof(header), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(header))
@@ -200,7 +219,7 @@ int main(int argc, char *argv[])
     {
       DieWithError("sendto() failed");
     }
-
+*/
   close(sock);
   printf("All requests sent, socket closed, client finished\n");
   exit(0);
