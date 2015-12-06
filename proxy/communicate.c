@@ -94,7 +94,7 @@ char* communicate(int requestType, char* host, int robot_number, char* robot_id,
     
     memset(requestMsg, 0, 300);
     FILE *fp = fopen(filename, "wb");
-    
+    memset(buffer, 0, 1024);
     bytesRec = recv(sock, buffer, 1024, 0);
     if(bytesRec<0) return "fail";
     memset(payload, 0, sizeof(payload));
@@ -120,19 +120,23 @@ char* communicate(int requestType, char* host, int robot_number, char* robot_id,
     //process the other responses by removing the header and then saving the payload
     else{
         //remove the header
+    char* mallocBuff;
         sprintf(payload, "%s", strtok(buffer, "\n"));
         sprintf(payload, "%s", strtok(NULL, " "));
+
         sprintf(payloadSize, "%s", strtok(NULL, "\n"));
-        for(i=0; i<5; i++)
+
+        for(i=0; i<5; i++){-
             sprintf(payload, "%s", strtok(NULL, "\n"));
-        
+        }
+
         if(strlen(payload)>26){
-            fprintf(fp,"%s", payload);
-            totalBytes+=strlen(payload);
+            fwrite(payload, 1, atoi(payloadSize), fp);
+            totalBytes+=atoi(payloadSize);
         }
         memset(payload, 0, sizeof(payload));
         memset(buffer, 0, bytesRec);
-        
+
         while (totalBytes != atoi(payloadSize) && (bytesRec = recv(sock, buffer, 1024, 0)) > 0){
             totalBytes+=bytesRec;
             fprintf(fp,"%s", buffer);
