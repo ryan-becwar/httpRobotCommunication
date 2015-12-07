@@ -1,0 +1,16 @@
+GROUP MEMBERS
+Devin White
+Zachary Chessman
+Ryan Becwar
+Matthew Karkowski
+
+PROJECT DESCRIPTION
+This project utilizes a custom network protocol developed by the entirety of the CPSC 3600 class. This protocol augments UDP with additional functionality, allowing for segmenting large files to fit within a small packet size. The protocol's packet size is capped at 300 bytes, and the class-defined header is 28 bytes, leaving only 272 bytes for every payload. This makes segmenting extraordinarily important. The header contains a total file size, along with byte offsets and payload size, to allow for comprehensive segmentation and reconstruction for both clients and servers. 
+
+The project contains a client and server program which work together to interface with a server that contains data simulating virtual robots. The server program, which serves as a proxy between the client and the robot server, forwards commands sent from the client, by translating them into HTTP requests. 
+
+DESIGN
+
+KNOWN ISSUES
+
+
