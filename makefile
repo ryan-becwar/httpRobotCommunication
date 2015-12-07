@@ -1,15 +1,14 @@
 CC = gcc
 CFLAGS = -Wall
-C = client
+C = clientSource
 P = proxy
 
 all: client1 proxy1
 
 client1: $C/client.c $C/DieWithError.c
-	$(CC) $(CFLAGS) $C/client.c $C/DieWithError.c -o clientExe
+	$(CC) $(CFLAGS) $C/client.c $C/DieWithError.c -o client
 
 proxy1: $P/DieWithError.c $P/proxy.h $P/protocol.h $P/proxy.c $P/communicate.c
-	$(CC) $(CFLAGS) $P/proxy.c $P/DieWithError.c $P/communicate.c -o proxyExe
-
+	$(CC) $(CFLAGS) $P/proxy.c $P/DieWithError.c $P/communicate.c -o server
 clean:
 		rm -rf ${CLEANFILES} *~
