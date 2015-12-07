@@ -45,19 +45,19 @@ char* communicate(int requestType, char* host, int robot_number, char* robot_id,
         //move request
         case 32:
             port = 8082;
-            sprintf(request, "/state?id=%s&lx=%d", robot_id, data);
+            sprintf(request, "/twist?id=%s&lx=%d", robot_id, data);
             sprintf(filename,"output32.txt");
             break;
         //turn request
         case 64:
             port = 8082;
-            sprintf(request, "/state?id=%s&lz=%d", robot_id, data);
+            sprintf(request, "/twist?id=%s&az=%d", robot_id, data);
             sprintf(filename,"output64.txt");
             break;
         //stop request
         case 128:
             port = 8082;
-            sprintf(request, "/state?id=%s&lx=0", robot_id);
+            sprintf(request, "/twist?id=%s&lx=0", robot_id);
             sprintf(filename,"output128.txt");
             break;
         default:
@@ -120,13 +120,13 @@ char* communicate(int requestType, char* host, int robot_number, char* robot_id,
     //process the other responses by removing the header and then saving the payload
     else{
         //remove the header
-    char* mallocBuff;
         sprintf(payload, "%s", strtok(buffer, "\n"));
         sprintf(payload, "%s", strtok(NULL, " "));
 
         sprintf(payloadSize, "%s", strtok(NULL, "\n"));
 
-        for(i=0; i<5; i++){-
+        for(i=0; i<5; i++)
+	{-
             sprintf(payload, "%s", strtok(NULL, "\n"));
         }
 

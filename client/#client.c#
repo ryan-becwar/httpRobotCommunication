@@ -329,9 +329,7 @@ int main(int argc, char *argv[])
 
 	f = fopen(laserFile, "wb");
 	fwrite(respBuffer+28, 1, bytes_received-28, f);
-	printf("\n%s\n", respBuffer+28);
 
-	/////////////////////
 	while((bytes_received = recvfrom(sock, respBuffer, BUFSIZE, 0, (struct sockaddr *) &fromAddr, &fromSize)) >=300 )
 	  {
 	    fwrite(respBuffer+28, 1, bytes_received-28, f);
