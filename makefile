@@ -9,11 +9,11 @@ all: 1
 
 2: client2 proxy2
 
-client1: $C/UDPEchoClient1.c
-	$(CC) $(CFLAGS) UDPEchoClient.c -o client
+client1: $C/client.c $C/DieWithError.c
+	$(CC) $(CFLAGS) $C/client.c $C/DieWithError.c -o client
 
-proxy1: $P/DieWithError.c $P/getfile.c $P/getfile.h $P/UDPEchoServer.c
-	$(CC) $(CFLAGS) UDPEchoServer.c -o proxy
+proxy1: $P/DieWithError.c $P/proxy.h $P/protocol.h $P/proxy.c $P/communicate.c
+	$(CC) $(CFLAGS) $P/proxy.c $P/DieWithError.c $P/communicate.c -o proxy
 	
 client2:
 
