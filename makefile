@@ -11,4 +11,4 @@ client1: $C/client.c $C/DieWithError.c
 proxy1: $P/DieWithError.c $P/proxy.h $P/protocol.h $P/proxy.c $P/communicate.c
 	$(CC) $(CFLAGS) $P/proxy.c $P/DieWithError.c $P/communicate.c -o server
 clean:
-		rm -rf ${CLEANFILES} *~
+		rm -rf ${CLEANFILES} laser*.txt output*.txt *~
